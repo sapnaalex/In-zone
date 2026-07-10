@@ -67,6 +67,18 @@ body {
   border-color: #3f3f46;
 }
 
+.badge-pill {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 input, textarea {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -98,7 +110,23 @@ button:hover {
   background-color: var(--accent-hover);
 }
 
-.auth-form {
-  max-width: 400px;
-  margin: 4rem auto;
+button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+button.secondary:hover {
+  background-color: var(--bg-surface-elevated);
+}
+
+button.small-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.nav-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
 }
