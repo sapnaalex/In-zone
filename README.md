@@ -1,4 +1,4 @@
-# in-zone ⏱️
+# In-zone ⏱️
 
 A minimalist full-stack flow-state dashboard built with ReactJS and Node.js/Express.js designed to eliminate productivity overwhelm and keep you completely locked into deep work.
 
