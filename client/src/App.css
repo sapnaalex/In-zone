@@ -1,0 +1,68 @@
+:root {
+  --bg-primary: #121214;
+  --bg-surface: #1a1a1e;
+  --text-main: #e1e1e6;
+  --text-muted: #8d8d99;
+  --accent-glow: #633bbc;
+  --accent-border: #29292e;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid var(--accent-border);
+  padding-bottom: 1.5rem;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.05em;
+  background: linear-gradient(90deg, #fff, var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-header p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  background-color: #202024;
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
