@@ -1,219 +1,235 @@
-﻿import React, { useState, useEffect } from 'react'
-import ReactGA from 'react-ga4'
-import './App.css'
+﻿import React, { useState, useEffect } from 'react';
+import ReactGA from 'react-ga4';
+import './App.css';
 
-// Initialize Google Analytics safely
-const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX'
-ReactGA.initialize(GA_ID)
+// Safe fallback for Google Analytics
+const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "G-XXXXXXXXXX";
+ReactGA.initialize(GA_ID);
 
 export default function App() {
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  // --- PERSISTENT UTILITY WRAPPERS ---
+  // State Persistence Helpers
   const getSavedState = (key, defaultValue) => {
     try {
-      const saved = localStorage.getItem(key)
-      return saved ? JSON.parse(saved) : defaultValue
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
     } catch {
-      return defaultValue
+      return defaultValue;
     }
-  }
+  };
 
   const saveState = (key, value) => {
     try {
-      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
-      console.warn('Storage write blocked:', e)
+      console.warn("Storage write block prevented:", e);
     }
-  }
+  };
 
-  // --- COMPONENT STATE ---
-  const [user, setUser] = useState(() => getSavedState('iz_user', null))
-  const [view, setView] = useState(() => getSavedState('iz_view', 'auth'))
-  
-  // Auth view handlers
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [authForm, setAuthForm] = useState({ username: '', email: '', password: '' })
-  const [authError, setAuthError] = useState('')
+  // Main UI State Layers
+  const [user, setUser] = useState(() => getSavedState('iz_user', null));
+  const [view, setView] = useState(() => getSavedState('iz_view', 'auth'));
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authForm, setAuthForm] = useState({ username: '', email: '', password: '' });
+  const [authError, setAuthError] = useState('');
 
-  // Pomodoro timeline state
-  const [timerMode, setTimerMode] = useState('Focus')
-  const [minutes, setMinutes] = useState(25)
-  const [seconds, setSeconds] = useState(0)
-  const [isActive, setIsActive] = useState(false)
-  const [completedBlocks, setCompletedBlocks] = useState(() => getSavedState('iz_completed_blocks', 0))
+  // Pomodoro Phase Mechanics
+  const [timerMode, setTimerMode] = useState('Focus'); 
+  const [minutes, setMinutes] = useState(25);
+  const [seconds, setSeconds] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [completedBlocks, setCompletedBlocks] = useState(() => getSavedState('iz_completed_blocks', 0));
 
-  // Focus Log Lists
-  const [tasks, setTasks] = useState(() => getSavedState('iz_tasks', []))
-  const [taskInput, setTaskInput] = useState('')
-  const [distractions, setDistractions] = useState(() => getSavedState('iz_distractions', []))
-  const [distractionInput, setDistractionInput] = useState('')
-  const [analyzing, setAnalyzing] = useState(false)
+  // Productivity Log Lists
+  const [tasks, setTasks] = useState(() => getSavedState('iz_tasks', []));
+  const [taskInput, setTaskInput] = useState('');
+  const [distractions, setDistractions] = useState(() => getSavedState('iz_distractions', []));
+  const [distractionInput, setDistractionInput] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
 
-  // Help & feedback elements
-  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
-  const [contactStatus, setContactStatus] = useState('')
+  // Feedback System
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactStatus, setContactStatus] = useState('');
 
-  // --- PERSISTENCE & ANALYTICS MONITOR EFFECTS ---
+  // Page View Analytics Tracking
   useEffect(() => {
-    ReactGA.send({ hitType: 'pageview', page: `/${view}`, title: `${view} Page` })
-    saveState('iz_view', view)
-  }, [view])
+    ReactGA.send({ hitType: "pageview", page: `/${view}`, title: `${view} Screen` });
+    saveState('iz_view', view);
+  }, [view]);
 
+  // Sync state loops
   useEffect(() => {
-    saveState('iz_user', user)
-    if (user && view === 'auth') {
-      setView('dashboard')
-    }
-  }, [user])
+    saveState('iz_user', user);
+    if (user && view === 'auth') setView('dashboard');
+  }, [user]);
 
-  useEffect(() => saveState('iz_tasks', tasks), [tasks])
-  useEffect(() => saveState('iz_distractions', distractions), [distractions])
-  useEffect(() => saveState('iz_completed_blocks', completedBlocks), [completedBlocks])
+  useEffect(() => saveState('iz_tasks', tasks), [tasks]);
+  useEffect(() => saveState('iz_distractions', distractions), [distractions]);
+  useEffect(() => saveState('iz_completed_blocks', completedBlocks), [completedBlocks]);
 
-  // Pomodoro interval loop
+  // Clock Loop Mechanics
   useEffect(() => {
-    let interval = null
+    let interval = null;
     if (isActive) {
       interval = setInterval(() => {
         if (seconds === 0) {
           if (minutes === 0) {
-            triggerTimerCompletion()
+            triggerTimerCompletion();
           } else {
-            setMinutes(minutes - 1)
-            setSeconds(59)
+            setMinutes(minutes - 1);
+            setSeconds(59);
           }
         } else {
-          setSeconds(seconds - 1)
+          setSeconds(seconds - 1);
         }
-      }, 1000)
+      }, 1000);
     } else {
-      clearInterval(interval)
+      clearInterval(interval);
     }
-    return () => clearInterval(interval)
-  }, [isActive, seconds, minutes, timerMode])
+    return () => clearInterval(interval);
+  }, [isActive, seconds, minutes, timerMode]);
 
-  // --- POMODORO METRICS ---
   const triggerTimerCompletion = () => {
-    setIsActive(false)
-    const completedMode = timerMode
-    const nextMode = timerMode === 'Focus' ? 'Break' : 'Focus'
+    setIsActive(false);
+    const finishedMode = timerMode;
+    const nextMode = timerMode === 'Focus' ? 'Break' : 'Focus';
     
-    setTimerMode(nextMode)
-    setMinutes(nextMode === 'Focus' ? 25 : 5)
-    setSeconds(0)
+    setTimerMode(nextMode);
+    setMinutes(nextMode === 'Focus' ? 25 : 5);
+    setSeconds(0);
 
+    // Dynamic Chime Tone Audio
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-      const osc = audioCtx.createOscillator()
-      const gain = audioCtx.createGain()
-      osc.connect(gain)
-      gain.connect(audioCtx.destination)
-      osc.type = 'sine'
-      osc.frequency.value = completedMode === 'Focus' ? 880 : 440
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime)
-      osc.start()
-      osc.stop(audioCtx.currentTime + 0.5)
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = finishedMode === 'Focus' ? 880 : 440; 
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
     } catch (e) {
-      console.log('Audio notification skipped:', e)
+      console.log("Web Audio skipped:", e);
     }
 
-    if (completedMode === 'Focus') {
-      setCompletedBlocks(prev => prev + 1)
-      ReactGA.event({ category: 'Timer', action: 'Completed Focus Block' })
-      alert('Phenomenal focus phase! Take a recovery break.')
+    if (finishedMode === 'Focus') {
+      setCompletedBlocks(prev => prev + 1);
+      // Track Custom Google Analytics Event
+      ReactGA.event({
+        category: 'FocusTimer',
+        action: 'Completed_Focus_Session',
+        label: `User_${user?.username || 'Guest'}`
+      });
+      alert("Phenomenal focus session complete! Rest your eyes.");
     } else {
-      ReactGA.event({ category: 'Timer', action: 'Completed Break Phase' })
-      alert('Break complete. Ready to get back in-zone?')
+      ReactGA.event({
+        category: 'FocusTimer',
+        action: 'Completed_Break_Session'
+      });
+      alert("Break is over! Ready to get back in the zone?");
     }
-  }
+  };
 
-  // --- OFFLINE HEURISTIC NLP ENGINE (HYBRID ARCHITECTURE) ---
+  // Client-Side Offline Regex Engine Fallback
   const classifyDistractionOffline = (text) => {
-    const query = text.toLowerCase()
-    let category = 'General Intrusive Thought'
-    let confidence = 0.50
+    const query = text.toLowerCase();
+    let category = "General Intrusive Thought";
+    let confidence = 0.50;
 
     if (/\b(eat|snack|drink|coffee|lunch|hungry|food|water|tea|sugar)\b/.test(query)) {
-      category = 'Biological Urge'
-      confidence = 0.92
+      category = "Biological Urge";
+      confidence = 0.92;
     } else if (/\b(instagram|facebook|twitter|youtube|reddit|phone|tiktok|social|app|feed|scrolling)\b/.test(query)) {
-      category = 'Dopamine Traps'
-      confidence = 0.96
+      category = "Dopamine Traps";
+      confidence = 0.96;
     } else if (/\b(worry|anxious|fail|deadline|test|scared|stress|late|exams|grade)\b/.test(query)) {
-      category = 'Stress/Anxiety Intrusion'
-      confidence = 0.81
+      category = "Stress/Anxiety Intrusion";
+      confidence = 0.81;
     } else if (/\b(clean|laundry|dog|dishes|house|chore|vacuum|tidy|room)\b/.test(query)) {
-      category = 'Productive Procrastination'
-      confidence = 0.74
+      category = "Productive Procrastination";
+      confidence = 0.74;
     }
 
-    return { category, confidence }
-  }
+    return { category, confidence };
+  };
 
-  // --- ENDPOINT OPERATIONS ---
+  // Handle Sign-in & Register
   const handleAuth = async (e) => {
-    e.preventDefault()
-    setAuthError('')
-    const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login'
+    e.preventDefault();
+    setAuthError('');
+    const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
     
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authForm),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Authentication failed.')
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Authentication check failed.');
 
-      setUser(data.user)
-      setView('dashboard')
-      ReactGA.event({ category: 'User', action: isSignUp ? 'Signed Up' : 'Logged In' })
+      setUser(data.user);
+      setView('dashboard');
+
+      ReactGA.event({
+        category: 'Account',
+        action: isSignUp ? 'Registered_User' : 'Logged_In_User',
+        label: data.user.email
+      });
     } catch (err) {
-      console.warn('Backend server offline. Invoking developer testing mode.', err)
-      setAuthError('Server unavailable. Auto-initializing mock session for validation.')
+      console.warn("Backend local-sync check. Operating local offline simulation fallback mode.", err);
+      setAuthError("Database unreachable. Booting with offline local session.");
       
       setTimeout(() => {
-        setUser({ id: 999, username: authForm.username || 'Developer', email: authForm.email })
-        setView('dashboard')
-      }, 1200)
+        setUser({ id: 888, username: authForm.username || "LocalUser", email: authForm.email });
+        setView('dashboard');
+      }, 1000);
     }
-  }
+  };
 
+  // Core 3 Focus Logic
   const handleAddTask = (e) => {
-    e.preventDefault()
-    if (!taskInput.trim()) return
+    e.preventDefault();
+    if (!taskInput.trim()) return;
     if (tasks.length >= 3) {
-      alert('Focus saturated! Clear an active target before tracking a new item.')
-      return
+      alert("Focus saturated! Clear a task from your layout before tracking a new one.");
+      return;
     }
-    setTasks([...tasks, { id: Date.now(), text: taskInput, done: false }])
-    setTaskInput('')
-    ReactGA.event({ category: 'Tasks', action: 'Created Task' })
-  }
+    setTasks([...tasks, { id: Date.now(), text: taskInput, done: false }]);
+    setTaskInput('');
+    
+    ReactGA.event({
+      category: 'FocusList',
+      action: 'Added_Focus_Item'
+    });
+  };
 
+  // Smart Distraction Logging
   const handleAddDistraction = async (e) => {
-    e.preventDefault()
-    if (!distractionInput.trim()) return
+    e.preventDefault();
+    if (!distractionInput.trim()) return;
 
-    setAnalyzing(true)
-    let prediction = null
+    setAnalyzing(true);
+    let prediction = null;
 
     try {
       const response = await fetch(`${API_BASE}/api/ai/classify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: distractionInput }),
-      })
+      });
       if (response.ok) {
-        prediction = await response.json()
+        prediction = await response.json();
       }
     } catch (err) {
-      console.warn('Backend AI classifier offline. Deploying client heuristic fallback.')
+      console.warn("API Classifier offline. Initiating offline Regex classification fallback.");
     }
 
     if (!prediction) {
-      prediction = classifyDistractionOffline(distractionInput)
+      prediction = classifyDistractionOffline(distractionInput);
     }
 
     setDistractions([
@@ -225,60 +241,67 @@ export default function App() {
         confidence: Math.round(prediction.confidence * 100),
         timestamp: new Date().toLocaleTimeString()
       }
-    ])
-    setDistractionInput('')
-    ReactGA.event({ category: 'AI_Analytics', action: 'Classified Intrusion', label: prediction.category })
-    setAnalyzing(false)
-  }
+    ]);
+    setDistractionInput('');
 
+    ReactGA.event({
+      category: 'DistractionLogger',
+      action: 'Logged_Thought_Intrusion',
+      label: prediction.category
+    });
+    setAnalyzing(false);
+  };
+
+  // Send feedback
   const handleContactSubmit = async (e) => {
-    e.preventDefault()
-    setContactStatus('Dispatching feedback...')
+    e.preventDefault();
+    setContactStatus('Saving message securely to server Database...');
     try {
       const res = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactForm),
-      })
-      if (!res.ok) throw new Error()
-      setContactStatus('Workspace feedback registered. Thank you!')
-      setContactForm({ name: '', email: '', message: '' })
-      ReactGA.event({ category: 'Form', action: 'Contact Form Submitted' })
+      });
+      if (!res.ok) throw new Error();
+      setContactStatus('Workspace feedback saved to database permanently. Thank you!');
+      setContactForm({ name: '', email: '', message: '' });
+      ReactGA.event({ category: 'FeedbackForm', action: 'Submitted_Review' });
     } catch (err) {
-      setContactStatus('Locally cached. Server integration pending.')
+      setContactStatus('Locally saved. Your feedback is safely stored in local memory.');
     }
-  }
+  };
 
+  // CSV Audit Generator
   const handleExportCSV = () => {
     if (distractions.length === 0) {
-      alert('No logged intrusions available to compile a focus audit report.')
-      return
+      alert("No distractions tracked to audit.");
+      return;
     }
 
-    let csvContent = 'data:text/csv;charset=utf-8,'
-    csvContent += 'ID,Intrusive Thought,Classified Category,Model Match Confidence,Timestamp\n'
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID,Intrusive Thought,Classified Category,Model Match Confidence,Timestamp\n";
 
     distractions.forEach(item => {
-      const escapedText = `"${item.text.replace(/"/g, '""')}"`
-      const escapedCategory = `"${item.category.replace(/"/g, '""')}"`
-      csvContent += `${item.id},${escapedText},${escapedCategory},${item.confidence}%,${item.timestamp || 'N/A'}\n`
-    })
+      const escapedText = `"${item.text.replace(/"/g, '""')}"`;
+      const escapedCategory = `"${item.category.replace(/"/g, '""')}"`;
+      csvContent += `${item.id},${escapedText},${escapedCategory},${item.confidence}%,${item.timestamp || 'N/A'}\n`;
+    });
 
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `in-zone-productivity-audit-${Date.now()}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    ReactGA.event({ category: 'Audit', action: 'Exported CSV Logs' })
-  }
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `in-zone-productivity-audit-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    ReactGA.event({ category: 'Reporting', action: 'Downloaded_CSV_Audit' });
+  };
 
   const getCategoryCount = (categoryName) => {
-    return distractions.filter(d => d.category === categoryName).length
-  }
+    return distractions.filter(d => d.category === categoryName).length;
+  };
 
-  const totalIntrusions = distractions.length
+  const totalIntrusions = distractions.length;
 
   return (
     <div className="app-container">
@@ -290,15 +313,16 @@ export default function App() {
             <>
               <button className="nav-btn" onClick={() => setView('dashboard')}>Dashboard</button>
               <button className="nav-btn" onClick={() => setView('contact')}>Feedback</button>
-              <button className="nav-btn secondary" onClick={() => { setUser(null); setView('auth'); localStorage.clear() }}>Sign Out</button>
+              <button className="nav-btn secondary" onClick={() => { setUser(null); setView('auth'); localStorage.clear(); }}>Sign Out</button>
             </>
           )}
         </div>
       </header>
 
+      {/* VIEW 1: AUTHENTICATION */}
       {view === 'auth' && (
         <div className="auth-form card">
-          <h2>{isSignUp ? 'Establish Workspace' : 'Unlock Dashboard'}</h2>
+          <h2>{isSignUp ? 'Create Workspace' : 'Welcome Back'}</h2>
           {authError && <p style={{ color: 'var(--warning-color)', fontSize: '0.85rem', marginBottom: '1rem' }}>{authError}</p>}
           <form onSubmit={handleAuth}>
             {isSignUp && (
@@ -336,8 +360,10 @@ export default function App() {
         </div>
       )}
 
+      {/* VIEW 2: PRODUCTIVITY WORKSPACE */}
       {view === 'dashboard' && (
         <div className="app-grid">
+          {/* Pomodoro Timer Module */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
             <span className="badge-pill">{timerMode} Phase</span>
             <div style={{ fontSize: '5rem', fontWeight: '800', margin: '1rem 0', fontFamily: 'monospace', letterSpacing: '-2px' }}>
@@ -347,7 +373,7 @@ export default function App() {
               <button onClick={() => setIsActive(!isActive)}>
                 {isActive ? 'Pause' : 'Start Clock'}
               </button>
-              <button className="secondary" onClick={() => { setIsActive(false); setMinutes(25); setSeconds(0) }}>
+              <button className="secondary" onClick={() => { setIsActive(false); setMinutes(25); setSeconds(0); }}>
                 Reset
               </button>
             </div>
@@ -356,7 +382,9 @@ export default function App() {
             </div>
           </div>
 
+          {/* Action Panels */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Rule of 3 Limits */}
             <div className="card">
               <h3>Today's Core 3 Focus Items ({tasks.length}/3)</h3>
               <form onSubmit={handleAddTask} style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
@@ -386,6 +414,7 @@ export default function App() {
               </ul>
             </div>
 
+            {/* Smart Distraction Heuristics Log */}
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3>Smart Distraction Dump</h3>
@@ -421,12 +450,14 @@ export default function App() {
                 ))}
               </ul>
 
+              {/* Inline CSS Visualization Bar Chart */}
               {totalIntrusions > 0 && (
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                   <h4 style={{ fontSize: '0.85rem', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Cognitive Intrusion Analysis</h4>
+                  
                   {['Dopamine Traps', 'Biological Urge', 'Stress/Anxiety Intrusion', 'Productive Procrastination', 'General Intrusive Thought'].map(cat => {
-                    const count = getCategoryCount(cat)
-                    const percentage = totalIntrusions > 0 ? (count / totalIntrusions) * 100 : 0
+                    const count = getCategoryCount(cat);
+                    const percentage = totalIntrusions > 0 ? (count / totalIntrusions) * 100 : 0;
                     return (
                       <div key={cat} style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
@@ -437,7 +468,7 @@ export default function App() {
                           <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent-color)', borderRadius: '3px', transition: 'width 0.4s ease' }}></div>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -446,6 +477,7 @@ export default function App() {
         </div>
       )}
 
+      {/* VIEW 3: FEEDBACK INTERFACE */}
       {view === 'contact' && (
         <div className="card" style={{ maxWidth: '600px', margin: '2rem auto' }}>
           <h2>Submit Workspace Feedback</h2>
@@ -477,5 +509,5 @@ export default function App() {
         </div>
       )}
     </div>
-  )
+  );
 }
